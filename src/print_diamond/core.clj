@@ -5,32 +5,26 @@
 
 (def ^:private alphabet (map str (char-range \A \Z)))
 
-(defn- spaces [n]
-  (clojure.string/join (repeat n "_")))
+(defn whole-letters-line [letter]
+  (let [letters-until (concat (take-while #(not= % letter) alphabet) [letter])]
+    (apply str (concat (reverse (drop 1 letters-until)) letters-until))))
 
-(defn- current-line [letter pos given-letter-pos]
-  (let [spaces-side (spaces (- given-letter-pos pos))
-        spaces-middle (spaces (dec (* 2 pos)))]
-    (if (= letter "A")
-      (str spaces-side letter spaces-side)
-      (str spaces-side letter spaces-middle letter spaces-side))))
+(defn introduce-spaces [line letter]
+  (apply str (map #(if (= (str %) letter) letter "_") line)))
 
-(def ^:private previous-lines take)
+(defn lines-number-in-tringle [letter]
+  (inc (.indexOf alphabet letter)))
 
-(defn- diamond-lines [pos lines middle-line]
-  (clojure.string/join
-    "\n"
-    (concat (previous-lines pos lines)
-            [middle-line]
-            (reverse (previous-lines pos lines)))))
+(defn upper-diamond-lines [letter]
+  (let [line (whole-letters-line letter)
+        num-triangle-lines (lines-number-in-tringle letter)]
+    (map introduce-spaces
+         (repeat num-triangle-lines line)
+         (take num-triangle-lines alphabet))))
+
+(defn diamond-lines [letter]
+  (let [upper-part (upper-diamond-lines letter)]
+    (concat upper-part (reverse (drop-last upper-part)))))
 
 (defn print-diamond [letter]
-  (let [letter-pos (.indexOf alphabet letter)]
-    (loop [letters alphabet lines [] pos 0]
-      (let [current-letter (first letters)
-            new-line (current-line current-letter pos letter-pos)]
-        (if (= letter current-letter)
-          (diamond-lines pos lines new-line)
-          (recur (rest letters)
-                 (conj lines new-line)
-                 (inc pos)))))))
+  (clojure.string/join "\n" (diamond-lines letter)))
